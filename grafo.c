@@ -152,6 +152,8 @@ void xor(lista c);
 lista caminho_aumentante(grafo g);
 void insert_vertex(const char* name, grafo g);
 void insert_edge(const char* tail, const char* head, grafo g);
+bool get_path(vertice v, lista path);
+
 
 
 /*________________________________________________________________*/
@@ -341,6 +343,30 @@ grafo le_grafo(FILE *input) {
 }
 
 
+bool get_path(vertice v, lista path) {
+	no		n;
+	aresta	a;
+	vertice	aux;
+
+	if (!v->v_covered && !v->v_visitado) {
+		return TRUE;
+	}
+
+	v->v_visitado = eVisited;
+	for( n=primeiro_no(v->v_neighborhood_out); n; n=proximo_no(n)) {
+		a = (aresta)conteudo(n);
+		aux= a->a_orig == v ? a->a_dst: a->a_orig;
+		if( aux->v_visitado == eNotSet ) {
+			if( get_path(aux, path)) {
+				insere_lista(a, path);
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
+}
+
 void insert_vertex(const char* name, grafo g) {
 	vertice newv = (vertice)mymalloc(sizeof(struct vertice));
 	memset(newv, 0, sizeof(struct vertice));
@@ -377,14 +403,14 @@ lista caminho_aumentante(grafo g) {
 		v = (vertice)conteudo(n);
 		if( !v->v_visitado && !v->v_covered ) {
 			path = constroi_lista();
-			v->v_visitado = 1;
-//			if( busca_caminho(v, path) ) {
-//				return path;
-//			}
+			v->v_visitado = eVisited;
+			if( get_path(v, path) ) {
+				return path;
+			}
 			destroi_lista(path, NULL);
 		}
 	}
-	//desvisita_vertices(g);
+	set_none_vertexes(g);
 
 	return NULL;
 }
