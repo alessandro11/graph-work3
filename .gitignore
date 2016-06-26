@@ -37,3 +37,6 @@ teste
 .cproject
 .project
 .settings/
+
+# directory to deliver to professor
+ae11-rds11/

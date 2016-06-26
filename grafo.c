@@ -287,8 +287,7 @@ int remove_no(struct lista *l, struct no *rno, int destroi(void *)) {
 /*
  * Aqui termina lista.c
  */
-
-/*________________________________________________________________*/
+//------------------------------------------------------------------------------
 char 	*nome_grafo(grafo g)		{ return g->g_nome; }
 char	*nome_vertice(vertice v)	{ return v->v_nome; }
 int		direcionado(grafo g)		{ return g->g_tipo; }
@@ -296,7 +295,7 @@ int		ponderado(grafo g)			{ return g->g_ponderado; }
 UINT	n_vertices(grafo g)			{ return g->g_nvertices;   }
 UINT	n_arestas(grafo g)			{ return g->g_naresta; }
 
-/*________________________________________________________________*/
+//------------------------------------------------------------------------------
 grafo le_grafo(FILE *input) {
     Agraph_t*	Ag_g;
     Agnode_t*	Ag_v;
@@ -342,7 +341,8 @@ grafo le_grafo(FILE *input) {
     return g;
 }
 
-
+//------------------------------------------------------------------------------
+// Encontra caminho.
 bool get_path(vertice v, lista path) {
 	no		n;
 	aresta	a;
@@ -367,6 +367,8 @@ bool get_path(vertice v, lista path) {
 	return FALSE;
 }
 
+//------------------------------------------------------------------------------
+// Retorna uma lista do caminho aumentate, null caso contrário.
 lista caminho_aumentante(grafo g) {
 	lista 	path;
 	vertice	v;
@@ -391,6 +393,7 @@ lista caminho_aumentante(grafo g) {
 //------------------------------------------------------------------------------
 // Se M é um emparelhamento em um grafo G e P é um caminho M-aumentante, então
 // o conjunto M xor E(P) é um emparelhamento em G  com |M|+1 arestas.
+// Teorema e dicas do monitor.
 void xor(lista path) {
 	aresta edge;
 
@@ -607,7 +610,7 @@ grafo escreve_grafo(FILE *output, grafo g) {
     );
 
     for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) )
-        fprintf(output, "   \"%s\"\n", ((vertice)conteudo(n))->v_nome);
+        fprintf(output, "    \"%s\"\n", ((vertice)conteudo(n))->v_nome);
     fprintf( output, "\n" );
 
 	ch = direcionado(g) ? '>' : '-';
@@ -617,7 +620,7 @@ grafo escreve_grafo(FILE *output, grafo g) {
 			e = (aresta)conteudo(ne);
 			if( e->a_visitada == eVisited ) continue;
 			e->a_visitada = eVisited;
-			fprintf(output, "   \"%s\" -%c \"%s\"",
+			fprintf(output, "    \"%s\" -%c \"%s\"",
 				e->a_orig->v_nome, ch, e->a_dst->v_nome
 			);
 
