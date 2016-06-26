@@ -23,7 +23,6 @@
 #include <errno.h>
 #include <graphviz/cgraph.h>
 #include "grafo.h"
-#include "lista.h"
 
 typedef unsigned int UINT;
 typedef long int LINT;
@@ -48,6 +47,25 @@ typedef enum __state {
 	eInserted
 }eState;
 
+
+//---------------------------------------------------------------------------
+// nó de lista encadeada cujo conteúdo é um void *
+
+struct no {
+
+  void *conteudo;
+  no proximo;
+};
+//---------------------------------------------------------------------------
+// lista encadeada
+
+struct lista {
+
+  unsigned int tamanho;
+  int padding; // só pra evitar warning
+  no primeiro;
+};
+
 //------------------------------------------------------------------------------
 // (apontador para) estrutura de dados para representar um grafo
 //
@@ -60,7 +78,6 @@ typedef enum __state {
 // num grafo com pesos nas arestas todas as arestas tem peso, que é um long int
 //
 // o peso default de uma aresta é 0
-
 struct grafo {
     UINT    g_nvertices;
     UINT    g_naresta;
@@ -75,6 +92,8 @@ struct vertice {
     int*	v_lbl;
     eState	v_visitado;
     int		v_index;
+    bool	v_covered;
+    int		padding;
     lista	v_neighborhood_in;
     lista	v_neighborhood_out;
 };
@@ -83,6 +102,8 @@ struct aresta {
 	bool	a_ponderado;
 	eState	a_visitada;
     LINT	a_peso;
+    bool	a_covered;
+    int		padding;
     vertice	a_orig;         // tail
     vertice	a_dst;          // head
 };
@@ -127,7 +148,142 @@ void set_none_vertexes(grafo g);
 vertice nxt_neighbor_r(lista l);
 void set_none_arestas(grafo g);
 int are_neighbors(vertice v1, vertice v2);
+void xor(lista c);
+lista caminho_aumentante(grafo g);
+void insert_vertex(const char* name, grafo g);
 
+
+/*________________________________________________________________*/
+/*
+ * Aqui comeca lista.c
+ */
+//---------------------------------------------------------------------------
+// devolve o número de nós da lista l
+
+unsigned int tamanho_lista(lista l) { return l->tamanho; }
+
+//---------------------------------------------------------------------------
+// devolve o primeiro nó da lista l,
+//      ou NULL, se l é vazia
+
+no primeiro_no(lista l) { return l->primeiro; }
+
+//---------------------------------------------------------------------------
+// devolve o conteúdo do nó n
+//      ou NULL se n = NULL
+
+void *conteudo(no n) { return n->conteudo; }
+
+//---------------------------------------------------------------------------
+// devolve o sucessor do nó n,
+//      ou NULL, se n for o último nó da lista
+
+no proximo_no(no n) { return n->proximo; }
+
+//---------------------------------------------------------------------------
+// cria uma lista vazia e a devolve
+//
+// devolve NULL em caso de falha
+
+lista constroi_lista(void) {
+
+  lista l = malloc(sizeof(struct lista));
+
+  if ( ! l )
+    return NULL;
+
+  l->primeiro = NULL;
+  l->tamanho = 0;
+
+  return l;
+}
+//---------------------------------------------------------------------------
+// desaloca a lista l e todos os seus nós
+//
+// se destroi != NULL invoca
+//
+//     destroi(conteudo(n))
+//
+// para cada nó n da lista.
+//
+// devolve 1 em caso de sucesso,
+//      ou 0 em caso de falha
+
+int destroi_lista(lista l, int destroi(void *)) {
+
+	  no p;
+	  int ok=1;
+
+	  while ( (p = primeiro_no(l)) ) {
+
+	    l->primeiro = proximo_no(p);
+
+	    if ( destroi )
+	      ok &= destroi(conteudo(p));
+
+	    free(p);
+	  }
+
+	  free(l);
+
+	  return ok;
+}
+
+//---------------------------------------------------------------------------
+// insere um novo nó na lista l cujo conteúdo é p
+//
+// devolve o no recém-criado
+//      ou NULL em caso de falha
+
+no insere_lista(void *conteudo, lista l) {
+
+  no novo = malloc(sizeof(struct no));
+
+  if ( ! novo )
+	return NULL;
+
+  novo->conteudo = conteudo;
+  novo->proximo = primeiro_no(l);
+  ++l->tamanho;
+
+  return l->primeiro = novo;
+}
+
+
+//------------------------------------------------------------------------------
+// remove o no de endereço rno de l
+// se destroi != NULL, executa destroi(conteudo(rno))
+// devolve 1, em caso de sucesso
+//         0, se rno não for um no de l
+
+int remove_no(struct lista *l, struct no *rno, int destroi(void *)) {
+	int r = 1;
+	if (l->primeiro == rno) {
+		l->primeiro = rno->proximo;
+		if (destroi != NULL) {
+			r = destroi(conteudo(rno));
+		}
+		free(rno);
+		l->tamanho--;
+		return r;
+	}
+	for (no n = primeiro_no(l); n->proximo; n = proximo_no(n)) {
+		if (n->proximo == rno) {
+			n->proximo = rno->proximo;
+			if (destroi != NULL) {
+				r = destroi(conteudo(rno));
+			}
+			free(rno);
+			l->tamanho--;
+			return r;
+		}
+	}
+	return 0;
+}
+
+/*
+ * Aqui termina lista.c
+ */
 
 /*________________________________________________________________*/
 char 	*nome_grafo(grafo g)		{ return g->g_nome; }
@@ -182,6 +338,67 @@ grafo le_grafo(FILE *input) {
     agclose(Ag_g);
     return g;
 }
+
+void insert_vertex(const char* name, grafo g) {
+	vertice newv = (vertice)mymalloc(sizeof(struct vertice));
+	memset(newv, 0, sizeof(struct vertice));
+
+	newv->v_nome = strdup(name);
+	newv->v_neighborhood_in  = constroi_lista();
+	newv->v_neighborhood_out = constroi_lista();
+	insere_lista(newv, g->g_vertices);
+	g->g_nvertices++;
+}
+
+lista caminho_aumentante(grafo g) {
+
+}
+
+void xor(lista path) {
+	aresta edge;
+
+	for (no a = primeiro_no(path); a; a = proximo_no(a)) {
+		edge = conteudo(a);
+		edge->a_covered = !edge->a_covered;
+		edge->a_orig->v_covered = 1;
+		edge->a_dst->v_covered = 1;
+	}
+}
+
+grafo emparelhamento_maximo(grafo g) {
+	lista 	path;
+	grafo 	empar;
+	vertice	v;
+	aresta	a;
+	no		n,na;
+
+	while( (path = caminho_aumentante(g)) != NULL ) {
+		xor(path);
+		destroi_lista(path, NULL);
+	}
+
+    empar = (grafo)mymalloc(sizeof(struct grafo));
+	memset(empar, 0, sizeof(struct grafo));
+    empar->g_nome = strdup(g->g_nome);
+    empar->g_vertices = constroi_lista();
+	for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) ) {
+		v = (vertice)conteudo(n);
+		insert_vertex(v->v_nome, empar);
+	}
+
+	for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) ) {
+		v = (vertice)conteudo(n);
+		for( na = primeiro_no(v->vizinhos_saida); na; na = proximo_no(na) ) {
+			a = conteudo(na);
+			if( a->a_orig == v && a->a_covered ) {
+				insere_aresta(emparelhamento, a->origem->nome, a->destino->nome, NULL);
+			}
+		}
+	}
+
+	return empar;
+}
+
 
 //------------------------------------------------------------------------------
 // devolve uma lista de vertices com a ordem dos vértices dada por uma 
@@ -788,4 +1005,3 @@ void heapify(PHEAP heap) {
 	for( int i = heap->pos >> 1; i >= 0; --i )
 		heap_sort(heap, i);
 }
-
