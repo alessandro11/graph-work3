@@ -1077,7 +1077,7 @@ void heap_sort(PHEAP heap, int i) {
 }
 
 //------------------------------------------------------------------------------
-// Corrige descendo, tambem chamdo de heapify.
+// Corrige descendo, tambem chamado de heapify.
 void heapify(PHEAP heap) {
 	for( int i = heap->pos >> 1; i >= 0; --i )
 		heap_sort(heap, i);
