@@ -92,7 +92,7 @@ struct vertice {
     int*	v_lbl;
     eState	v_visitado;
     int		v_index;
-    bool	v_covered;
+    bool	v_covered;		// O vertice esta coberto pelo emparelhamento?
     int		padding;
     lista	v_neighborhood_in;
     lista	v_neighborhood_out;
@@ -102,7 +102,7 @@ struct aresta {
 	bool	a_ponderado;
 	eState	a_visitada;
     LINT	a_peso;
-    bool	a_covered;
+    bool	a_covered;		// A aresta esta coberta pelo emparelhamento?
     int		padding;
     vertice	a_orig;         // tail
     vertice	a_dst;          // head
@@ -760,8 +760,11 @@ int destroi_grafo(void *c) {
 	int ret;
 	
 	free(g->g_nome);
+	g->g_nome = NULL;
 	ret = destroi_lista(g->g_vertices, destroi_vertice);
+	g->g_vertices = NULL;
 	free(c);
+	c = NULL;
 
 	return ret;
 }
@@ -775,16 +778,26 @@ int destroi_vertice(void* c) {
 	vertice v = (vertice)c;
 
 	free(v->v_nome);
+	v->v_nome = NULL;
 	free(v->v_lbl);
+	v->v_lbl = NULL;
 	ret = destroi_lista(v->v_neighborhood_in, destroi_aresta) && \
 		  destroi_lista(v->v_neighborhood_out, destroi_aresta);
+	v->v_neighborhood_in = v->v_neighborhood_out = NULL;
 	free(c);
+	c = NULL;
 
 	return ret;
 }
 
 int destroi_aresta(void* c) {
-	free(c);
+	aresta a = (aresta)c;
+
+	if( a->a_dst )
+		free(c);
+	a->a_dst = a->a_orig = NULL;
+	c = NULL;
+
 	return 1;
 }
 
