@@ -378,22 +378,6 @@ void insert_vertex(const char* name, grafo g) {
 	g->g_nvertices++;
 }
 
-void insert_edge(const char* tail, const char* head, grafo g) {
-	vertice	src, dst;
-	aresta newe;
-
-	newe = (aresta)malloc(sizeof(struct aresta));
-	memset(newe, 0, sizeof(struct aresta));
-
-	src = busca_vertice(tail, head, g->g_vertices, &dst);
-	newe->a_orig = src;
-	newe->a_dst  = dst;
-
-	insere_lista(newe, src->v_neighborhood_out);
-	insere_lista(newe, dst->v_neighborhood_out);
-	g->g_nvertices++;
-}
-
 lista caminho_aumentante(grafo g) {
 	lista 	path;
 	vertice	v;
@@ -455,7 +439,16 @@ grafo emparelhamento_maximo(grafo g) {
 		for( na = primeiro_no(v->v_neighborhood_out); na; na = proximo_no(na) ) {
 			a = (aresta)conteudo(na);
 			if( a->a_orig == v && a->a_covered ) {
-				insert_edge(a->a_orig->v_nome, a->a_dst->v_nome, empar);
+				aresta newe;
+
+				newe = (aresta)malloc(sizeof(struct aresta));
+				memset(newe, 0, sizeof(struct aresta));
+
+				newe->a_orig = busca_vertice(a->a_orig->v_nome,\
+						a->a_dst->v_nome, empar->g_vertices, &newe->a_dst);
+				insere_lista(newe, newe->a_orig->v_neighborhood_out);
+				insere_lista(newe, newe->a_dst->v_neighborhood_out);
+				g->g_nvertices++;
 			}
 		}
 	}
@@ -611,7 +604,7 @@ grafo escreve_grafo(FILE *output, grafo g) {
     );
 
     for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) )
-        fprintf(output, "    \"%s\"\n", ((vertice)conteudo(n))->v_nome);
+        fprintf(output, "   \"%s\"\n", ((vertice)conteudo(n))->v_nome);
     fprintf( output, "\n" );
 
 	ch = direcionado(g) ? '>' : '-';
@@ -621,7 +614,7 @@ grafo escreve_grafo(FILE *output, grafo g) {
 			e = (aresta)conteudo(ne);
 			if( e->a_visitada == eVisited ) continue;
 			e->a_visitada = eVisited;
-			fprintf(output, "    \"%s\" -%c \"%s\"",
+			fprintf(output, "   \"%s\" -%c \"%s\"",
 				e->a_orig->v_nome, ch, e->a_dst->v_nome
 			);
 
