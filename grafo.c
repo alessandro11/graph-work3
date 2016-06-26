@@ -350,6 +350,10 @@ void insert_vertex(const char* name, grafo g) {
 	g->g_nvertices++;
 }
 
+void insert_edge(const char* head, const char* tail, grafo g) {
+
+}
+
 lista caminho_aumentante(grafo g) {
 
 }
@@ -388,10 +392,10 @@ grafo emparelhamento_maximo(grafo g) {
 
 	for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) ) {
 		v = (vertice)conteudo(n);
-		for( na = primeiro_no(v->vizinhos_saida); na; na = proximo_no(na) ) {
-			a = conteudo(na);
+		for( na = primeiro_no(v->v_neighborhood_out); na; na = proximo_no(na) ) {
+			a = (aresta)conteudo(na);
 			if( a->a_orig == v && a->a_covered ) {
-				insere_aresta(emparelhamento, a->origem->nome, a->destino->nome, NULL);
+				insert_edge(a->a_orig->v_nome, a->a_dst->v_nome, empar);
 			}
 		}
 	}
@@ -843,10 +847,14 @@ vertice busca_vertice(const char* tail, const char* head,
 
     for( no n=primeiro_no(vertices); n && many < 2; n=proximo_no(n) ) {
     	tmp = (vertice)conteudo(n);
-        if( strcmp(tail, tmp->v_nome) == 0 )
+        if( strcmp(tail, tmp->v_nome) == 0 ) {
         	r_tail = tmp;
-        if( strcmp(head, tmp->v_nome) == 0 )
+        	many++;
+        }
+        if( strcmp(head, tmp->v_nome) == 0 ) {
         	*vdst = tmp;
+        	many++;
+        }
     }
 
     return r_tail;
