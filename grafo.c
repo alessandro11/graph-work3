@@ -10,8 +10,10 @@
  *       Revision:  none
  *       Compiler:  gcc
  *
- *         Author:  Alessandro Elias (BCC), ae11@c3sl.ufpr.br
+ *       Authores:  Alessandro Elias (BCC), ae11@c3sl.ufpr.br
  *            GRR:  20110589
+ *       			Ruanito D. Santos (BCC), rds11@inf.ufpr.br
+ *            GRR:  20114691
  *
  * =====================================================================================
  */
