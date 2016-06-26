@@ -415,6 +415,9 @@ lista caminho_aumentante(grafo g) {
 	return NULL;
 }
 
+//------------------------------------------------------------------------------
+// Se M é um emparelhamento em um grafo G e P é um caminho M-aumentante, então
+// o conjunto M xor E(P) é um emparelhamento em G  com |M|+1 arestas.
 void xor(lista path) {
 	aresta edge;
 
