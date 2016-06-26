@@ -150,8 +150,6 @@ void set_none_arestas(grafo g);
 int are_neighbors(vertice v1, vertice v2);
 void xor(lista c);
 lista caminho_aumentante(grafo g);
-void insert_vertex(const char* name, grafo g);
-void insert_edge(const char* tail, const char* head, grafo g);
 bool get_path(vertice v, lista path);
 
 
@@ -367,17 +365,6 @@ bool get_path(vertice v, lista path) {
 	return FALSE;
 }
 
-void insert_vertex(const char* name, grafo g) {
-	vertice newv = (vertice)mymalloc(sizeof(struct vertice));
-	memset(newv, 0, sizeof(struct vertice));
-
-	newv->v_nome = strdup(name);
-	newv->v_neighborhood_in  = constroi_lista();
-	newv->v_neighborhood_out = constroi_lista();
-	insere_lista(newv, g->g_vertices);
-	g->g_nvertices++;
-}
-
 lista caminho_aumentante(grafo g) {
 	lista 	path;
 	vertice	v;
@@ -413,6 +400,13 @@ void xor(lista path) {
 	}
 }
 
+//------------------------------------------------------------------------------
+// devolve um grafo cujos vertices são cópias de vértices do grafo
+// bipartido g e cujas arestas formam um emparelhamento máximo em g
+//
+// o grafo devolvido, portanto, é vazio ou tem todos os vértices com grau 1
+//
+// não verifica se g é bipartido; caso não seja, o comportamento é indefinido
 grafo emparelhamento_maximo(grafo g) {
 	lista 	path;
 	grafo 	empar;
@@ -431,7 +425,14 @@ grafo emparelhamento_maximo(grafo g) {
     empar->g_vertices = constroi_lista();
 	for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) ) {
 		v = (vertice)conteudo(n);
-		insert_vertex(v->v_nome, empar);
+
+		vertice newv = (vertice)mymalloc(sizeof(struct vertice));
+		memset(newv, 0, sizeof(struct vertice));
+		newv->v_nome = strdup(v->v_nome);
+		newv->v_neighborhood_in  = constroi_lista();
+		newv->v_neighborhood_out = constroi_lista();
+		insere_lista(newv, empar->g_vertices);
+		empar->g_nvertices++;
 	}
 
 	for( n=primeiro_no(g->g_vertices); n; n=proximo_no(n) ) {
